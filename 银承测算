@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>银承 / 存单测算小助手</title>
+  <style>
+    :root {
+      --brand: #0058a3;
+      --bg: #f5f7fa;
+      --card: #ffffff;
+      --border: #e1e7f0;
+      --text: #1f2933;
+      --muted: #607089;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: var(--brand);
+      color: #fff;
+      padding: 28px 16px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+    header p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    main {
+      max-width: 880px;
+      margin: -30px auto 60px;
+      padding: 0 16px;
+    }
+    section {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px;
+      margin-top: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 18px rgba(4, 18, 54, 0.08);
+    }
+    h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+      color: var(--brand);
+    }
+    label {
+      font-size: 14px;
+      color: var(--muted);
+      display: block;
+      margin-top: 12px;
+    }
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-top: 4px;
+      font-size: 15px;
+      background: #fff;
+    }
+    input[readonly] {
+      background: #f2f6fb;
+    }
+    textarea {
+      min-height: 160px;
+      resize: vertical;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    button {
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 24px;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 18px;
+      transition: transform 0.1s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .actions button.secondary {
+      background: #1c7ed6;
+    }
+    .calc-note,
+    .section-note {
+      font-size: 13px;
+      color: var(--muted);
+      margin: -6px 0 10px;
+    }
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f8fbff;
+      font-size: 14px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .check-item input {
+      width: 16px;
+      height: 16px;
+    }
+    .calc-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .summary-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #f8fbff;
+      padding: 16px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+    .summary-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      color: var(--brand);
+    }
+    .summary-text {
+      margin: 0;
+      font-size: 14px;
+      white-space: pre-line;
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .outputs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .outputs-grid textarea {
+      min-height: 260px;
+    }
+    .outputs-grid h3 {
+      margin-top: 0;
+    }
+    .copy-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .signature {
+      text-align: center;
+      color: #ff6b9d;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>银承开立 · 存单质押 · 快速测算</h1>
+    <p>票据金额测算、资料确认与文案输出</p>
+    <p class="signature">♥️ XD.Hu ♥️ 请夸请夸</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>① 核心测算</h2>
+      <p class="section-note">输入目标开票或可存金额（单位：万元，二选一即可），系统会自动计算 360 / 365 天口径并生成内部与对客文案。</p>
+      <div class="form-row">
+        <div>
+          <label>企业名称</label>
+          <input id="corp" type="text" placeholder="如：厦门**实业有限公司" />
+        </div>
+        <div>
+          <label>拟开票金额（万元，可只填这一项）</label>
+          <input id="billAmt" type="number" step="0.01" placeholder="如 500" />
+        </div>
+        <div>
+          <label>拟存定期（万元，或只填这一项）</label>
+          <input id="depositBudget" type="number" step="0.01" placeholder="客户只报存款时填写" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>年利率（如 1.4% 填 0.014）</label>
+          <input id="rate" type="number" step="0.0001" value="0.014" />
+        </div>
+        <div>
+          <label>开票日期</label>
+          <input id="startDate" type="date" />
+        </div>
+        <div>
+          <label>到期日期（自动 +6 个月）</label>
+          <input id="endDate" type="date" readonly />
+        </div>
+        <div>
+          <label>期限天数（自动）</label>
+          <input id="days" type="number" readonly />
+        </div>
+      </div>
+      <div class="actions">
+        <button id="btnSmartCalc">立即测算并生成话术</button>
+        <button class="secondary" id="btnReset">清空</button>
+      </div>
+      <div class="calc-summary">
+        <div class="summary-card">
+          <h3>内部测算</h3>
+          <p class="summary-text" id="summaryInternal">待测算：请录入信息并点击“立即测算并生成话术”。</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>② 材料准备提示</h2>
+      <p class="section-note">默认勾选合同、发票、发票清单与进款截图；如 1 周内已贴现则补充贴现流水，并登记票据张数与收款方。</p>
+      <div class="form-row">
+        <div>
+          <label>一周内是否已贴现</label>
+          <select id="discountStatus">
+            <option value="否">否</option>
+            <option value="是">是</option>
+          </select>
+        </div>
+        <div>
+          <label>开票张数</label>
+          <input id="invoiceCount" type="number" min="1" step="1" placeholder="如：2" />
+        </div>
+        <div>
+          <label>收款方 / 交易对手</label>
+          <input id="invoiceTarget" type="text" placeholder="如：上海某科技有限公司" />
+        </div>
+        <div>
+          <label>是否需要发票后补</label>
+          <select id="needInvoice">
+            <option value="否">否</option>
+            <option value="是">是</option>
+          </select>
+        </div>
+      </div>
+      <div class="checklist" id="materialsList">
+        <label class="check-item"><input type="checkbox" class="material-checkbox" data-label="购销合同" data-default="true" checked />购销合同</label>
+        <label class="check-item"><input type="checkbox" class="material-checkbox" data-label="发票（电子版pdf）" data-default="true" checked />发票</label>
+        <label class="check-item"><input type="checkbox" class="material-checkbox" data-label="发票清单" data-default="true" checked />发票清单</label>
+        <label class="check-item"><input type="checkbox" class="material-checkbox" data-label="贴现流水" data-discount="true" />贴现流水（如 1 周内已贴现）</label>
+        <label class="check-item"><input type="checkbox" class="material-checkbox" data-label="进款截图" data-default="true" checked />进款截图</label>
+        <label class="check-item"><input type="checkbox" class="material-checkbox" data-label="其他补充说明" />其他补充说明</label>
+      </div>
+    </section>
+
+    <section>
+      <h2>③ 输出 · 内部 & 客户</h2>
+      <div class="outputs-grid">
+        <div>
+          <h3>客户经理看</h3>
+          <textarea id="internalOutput" placeholder="点击“立即测算”后生成，亦可手动补充"></textarea>
+          <div class="copy-actions">
+            <button type="button" data-copy-target="internalOutput">复制客户经理话术</button>
+          </div>
+        </div>
+        <div>
+          <h3>客户沟通话术</h3>
+          <textarea id="clientOutput" placeholder="点击“立即测算”后生成，可直接粘贴到微信群"></textarea>
+          <div class="copy-actions">
+            <button type="button" data-copy-target="clientOutput">复制客户沟通话术</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const SUPPLEMENT_DEFAULT = '供应商货到后再开票，承诺开票后 1 个月内补齐发票';
+
+    function todayISO() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function addMonths(dateStr, months = 6) {
+      const base = dateStr ? new Date(dateStr) : new Date();
+      const clone = new Date(base.getTime());
+      clone.setMonth(clone.getMonth() + months);
+      return clone.toISOString().split('T')[0];
+    }
+
+    function updateDays() {
+      const start = document.getElementById('startDate');
+      const end = document.getElementById('endDate');
+      if (!start.value) {
+        start.value = todayISO();
+      }
+      end.value = addMonths(start.value, 6);
+      const sd = new Date(start.value);
+      const ed = new Date(end.value);
+      if (!sd || !ed || isNaN(sd.getTime()) || isNaN(ed.getTime())) return;
+      const diff = Math.max(1, Math.round((ed - sd) / (1000 * 60 * 60 * 24)));
+      document.getElementById('days').value = diff;
+    }
+
+    function fmt(num) {
+      if (num === null || num === undefined || Number.isNaN(num)) return '';
+      return Number(num).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function fmtWanValue(num, digits = 2) {
+      if (num === null || num === undefined || Number.isNaN(num)) return '';
+      return (num / 10000).toFixed(digits);
+    }
+
+    function fmtPercent(rate) {
+      if (rate === null || rate === undefined || Number.isNaN(rate)) return '—';
+      return `${(rate * 100).toFixed(2)}%`;
+    }
+
+    function hasValue(val) {
+      return val !== null && val !== undefined && !Number.isNaN(val);
+    }
+
+    function toChineseUpper(num) {
+      const CN_NUMS = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+      const CN_INT_RADICE = ['', '拾', '佰', '仟'];
+      const CN_INT_UNITS = ['', '万', '亿', '兆'];
+      const CN_DEC_UNITS = ['角', '分'];
+      const CN_INTEGER = '整';
+      const CN_DOLLAR = '元';
+      if (num === null || num === undefined || !Number.isFinite(num)) return '';
+      const amount = Math.abs(num);
+      if (amount === 0) return `零${CN_DOLLAR}${CN_INTEGER}`;
+      let integerNum = Math.floor(amount);
+      let decimalNum = Math.round((amount - integerNum) * 100);
+      let chineseStr = '';
+      let unitPos = 0;
+      while (integerNum > 0) {
+        const section = integerNum % 10000;
+        if (section === 0) {
+          if (!chineseStr.startsWith('零')) {
+            chineseStr = '零' + chineseStr;
+          }
+        } else {
+          let sectionStr = '';
+          let zeroFlag = true;
+          let sectionTemp = section;
+          for (let i = 0; i < 4; i++) {
+            const digit = sectionTemp % 10;
+            if (digit === 0) {
+              if (!zeroFlag) {
+                zeroFlag = true;
+                sectionStr = CN_NUMS[digit] + sectionStr;
+              }
+            } else {
+              zeroFlag = false;
+              sectionStr = CN_NUMS[digit] + CN_INT_RADICE[i] + sectionStr;
+            }
+            sectionTemp = Math.floor(sectionTemp / 10);
+          }
+          sectionStr += CN_INT_UNITS[unitPos];
+          chineseStr = sectionStr + chineseStr;
+        }
+        unitPos += 1;
+        integerNum = Math.floor(integerNum / 10000);
+      }
+      chineseStr = chineseStr
+        .replace(/零+/g, '零')
+        .replace(/零(万|亿|兆)/g, '$1')
+        .replace(/零$/g, '');
+      if (!chineseStr.endsWith(CN_DOLLAR)) {
+        chineseStr += CN_DOLLAR;
+      }
+      if (decimalNum === 0) {
+        chineseStr += CN_INTEGER;
+      } else {
+        const jiao = Math.floor(decimalNum / 10);
+        const fen = decimalNum % 10;
+        if (jiao > 0) {
+          chineseStr += `${CN_NUMS[jiao]}${CN_DEC_UNITS[0]}`;
+        } else {
+          chineseStr += '零';
+        }
+        if (fen > 0) {
+          chineseStr += `${CN_NUMS[fen]}${CN_DEC_UNITS[1]}`;
+        } else {
+          chineseStr += CN_INTEGER;
+        }
+      }
+      return chineseStr
+        .replace(/零角整/, '整')
+        .replace(/零角/, '')
+        .replace(/零分/, '');
+    }
+
+    const calcState = {
+      source: '',
+      depositBudget: null,
+      depositRequirement360: null,
+      depositRequirement365: null,
+      maxBill360: null,
+      maxBill365: null,
+      roundedDepositWan: null,
+      roundedDepositYuan: null,
+      rate: null,
+      days: null,
+      startDate: '',
+      endDate: '',
+    };
+
+    const summaryInternalEl = document.getElementById('summaryInternal');
+
+    function getMaterials() {
+      return Array.from(document.querySelectorAll('.material-checkbox:checked')).map((el) => el.dataset.label);
+    }
+
+    function buildInternalMail(corp, billWanText, depositWanText, rateText, daysText) {
+      return `各位领导上午好！
+科技业务部客户${corp}拟于${calcState.startDate || '近期'}向我行申请开立银承${billWanText}万元，拟购买我行定期存单${depositWanText}万元，期限约 ${daysText} 天，年利率 ${rateText}。请领导批示。`;
+    }
+
+    function buildInvoiceSupplement(corp, invoiceTarget, billWanText) {
+      return `各位领导上午好！
+科技业务部客户${corp}在我行获批一年期现金专案开票额度（请补充额度）万元，现公司拟于近期向我行申请开立一笔银承，金额为${billWanText}万元，期限约 ${calcState.days || '—'} 天，公司提供我行定期存单质押，开票交易对手为${invoiceTarget}。收款人为非关联公司，开票用途为采购原材料，贸易背景真实，不存在利用发票重复融资行为，符合反洗钱、KYC 等要求。
+
+目前该交易对手已提供部分增值税发票（预计约 80%），剩余发票将按贸易习惯在货款支付后陆续补齐。我部承诺于开票后本月内补齐全部发票资料。
+
+妥否？请领导批示。`;
+    }
+
+    function updateCalcSummary() {
+      if (!summaryInternalEl) return;
+      if (!calcState.source) {
+        summaryInternalEl.innerText = '待测算：请录入信息并点击“立即测算并生成话术”。';
+        return;
+      }
+      const rateText = fmtPercent(calcState.rate);
+      const daysText = calcState.days || document.getElementById('days').value || '—';
+
+      if (calcState.source === 'bill') {
+        const billWanValue = hasValue(calcState.maxBill365) ? fmtWanValue(calcState.maxBill365) : '';
+        const billWanText = billWanValue || '—';
+        const deposit360Text = hasValue(calcState.depositRequirement360) ? `${fmt(calcState.depositRequirement360)} 元` : '—';
+        const deposit365Text = hasValue(calcState.depositRequirement365) ? `${fmt(calcState.depositRequirement365)} 元` : '—';
+        const roundedWanText = hasValue(calcState.roundedDepositWan) ? `${calcState.roundedDepositWan}` : '';
+        const roundedYuanText = hasValue(calcState.roundedDepositYuan) ? `${fmt(calcState.roundedDepositYuan)} 元` : '—';
+
+        summaryInternalEl.innerText = `开票金额：${billWanText} 万元\n360 天最低存单：${deposit360Text}\n365 天最低存单：${deposit365Text}\n建议存单（对客）：${roundedWanText ? `${roundedWanText} 万元（${roundedYuanText}）` : '—'}\n利率：${rateText}｜期限约 ${daysText} 天`;
+      } else {
+        const depositYuanText = hasValue(calcState.depositBudget) ? `${fmt(calcState.depositBudget)} 元` : '—';
+        const bill360WanText = hasValue(calcState.maxBill360) ? fmtWanValue(calcState.maxBill360) : '';
+        const bill365WanText = hasValue(calcState.maxBill365) ? fmtWanValue(calcState.maxBill365) : '';
+        const bill360Line = hasValue(calcState.maxBill360) ? `${fmt(calcState.maxBill360)} 元（${bill360WanText} 万元）` : '—';
+        const bill365Line = hasValue(calcState.maxBill365) ? `${fmt(calcState.maxBill365)} 元（${bill365WanText} 万元）` : '—';
+
+        summaryInternalEl.innerText = `客户可存定期：${depositYuanText}\n360 天可开票：${bill360Line}\n365 天可开票：${bill365Line}\n预计可对客开票：${bill365WanText ? `${bill365WanText} 万元` : '—'}\n利率：${rateText}｜期限约 ${daysText} 天`;
+      }
+    }
+
+    function copyOutput(targetId) {
+      const field = document.getElementById(targetId);
+      if (!field || !field.value.trim()) {
+        alert('暂无可复制内容，请先生成。');
+        return;
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(field.value).then(() => {
+          alert('已复制，可直接粘贴。');
+        }).catch(() => {
+          field.select();
+          document.execCommand('copy');
+          alert('已复制，可直接粘贴。');
+        });
+      } else {
+        field.select();
+        document.execCommand('copy');
+        alert('已复制，可直接粘贴。');
+      }
+    }
+
+    function updateOutputs() {
+      const corp = document.getElementById('corp').value.trim() || '客户';
+      const invoiceCount = document.getElementById('invoiceCount').value.trim() || '（请确认）';
+      const invoiceTarget = document.getElementById('invoiceTarget').value.trim() || '（请补充收款方）';
+      const needInvoice = document.getElementById('needInvoice').value;
+      const hasDiscount = document.getElementById('discountStatus').value === '是';
+      const materials = getMaterials();
+      const materialsText = materials.length ? materials.join('、') : '按客户实际另行补充';
+      const rateText = fmtPercent(calcState.rate);
+      const daysText = calcState.days || document.getElementById('days').value || '—';
+
+      updateCalcSummary();
+
+      let internal = '请先点击“立即测算并生成话术”，系统会输出内部模板。';
+      let client = '请先点击“立即测算并生成话术”，系统会输出客户话术。';
+
+      if (calcState.source) {
+        const billWanValue = hasValue(calcState.maxBill365) ? fmtWanValue(calcState.maxBill365) : '';
+        const billWanText = billWanValue || '—';
+        const billYuanText = hasValue(calcState.maxBill365) ? `${fmt(calcState.maxBill365)} 元` : '—';
+        const roundedDepositWanText = hasValue(calcState.roundedDepositWan) ? `${calcState.roundedDepositWan}` : '';
+        const roundedDepositYuanText = hasValue(calcState.roundedDepositYuan) ? `${fmt(calcState.roundedDepositYuan)} 元` : '—';
+        const depositBudgetYuan = hasValue(calcState.depositBudget) ? `${fmt(calcState.depositBudget)} 元` : '—';
+        const depositBudgetWan = hasValue(calcState.depositBudget) ? fmtWanValue(calcState.depositBudget) : '';
+        const depositWanForMail = calcState.source === 'bill'
+          ? (roundedDepositWanText || '—')
+          : (depositBudgetWan || '—');
+        const depositWanForClient = calcState.source === 'bill'
+          ? (roundedDepositWanText ? `${roundedDepositWanText} 万元` : '—')
+          : (roundedDepositWanText ? `${roundedDepositWanText} 万元` : (depositBudgetWan ? `${depositBudgetWan} 万元` : '—'));
+        const pledgeAmountText = calcState.source === 'bill'
+          ? (roundedDepositYuanText !== '—' ? roundedDepositYuanText : '—')
+          : depositBudgetYuan;
+        const depositAmountYuan = calcState.source === 'bill'
+          ? (hasValue(calcState.roundedDepositYuan) ? calcState.roundedDepositYuan : null)
+          : (hasValue(calcState.depositBudget) ? calcState.depositBudget : null);
+        const depositAmountFormatted = hasValue(depositAmountYuan) ? fmt(depositAmountYuan) : '—';
+        const depositAmountUpper = hasValue(depositAmountYuan) ? toChineseUpper(depositAmountYuan) : '';
+        const billAmountYuan = hasValue(calcState.maxBill365) ? calcState.maxBill365 : null;
+        const pledgeAmountYuan = billAmountYuan ? billAmountYuan * 1.5 : null;
+        const pledgeAmountFormatted = hasValue(pledgeAmountYuan) ? fmt(pledgeAmountYuan) : '—';
+        const pledgeAmountUpper = hasValue(pledgeAmountYuan) ? toChineseUpper(pledgeAmountYuan) : '';
+        const billUpper = hasValue(billAmountYuan) ? toChineseUpper(billAmountYuan) : '';
+
+        let measureBlock = '';
+        if (calcState.source === 'bill') {
+          const deposit360 = hasValue(calcState.depositRequirement360) ? `${fmt(calcState.depositRequirement360)} 元` : '—';
+          const deposit365 = hasValue(calcState.depositRequirement365) ? `${fmt(calcState.depositRequirement365)} 元` : '—';
+          measureBlock = `360 天最低存单：${deposit360}\n365 天最低存单：${deposit365}\n建议对客存单：${roundedDepositWanText ? `${roundedDepositWanText} 万元（${roundedDepositYuanText}）` : '—'}`;
+        } else {
+          const bill360Line = hasValue(calcState.maxBill360) ? `${fmt(calcState.maxBill360)} 元（${fmtWanValue(calcState.maxBill360)} 万元）` : '—';
+          const bill365Line = hasValue(calcState.maxBill365) ? `${fmt(calcState.maxBill365)} 元（${billWanText} 万元）` : '—';
+          measureBlock = `客户可存定期：${depositBudgetYuan}\n360 天口径可开票：${bill360Line}\n365 天口径可开票：${bill365Line}\n建议对客开票：${billWanText} 万元`;
+        }
+
+        const invoiceLine = `拟开 ${invoiceCount} 张，收款方：${invoiceTarget}。`;
+        const invoiceNeedLine = needInvoice === '是'
+          ? `发票后补：${SUPPLEMENT_DEFAULT}`
+          : '发票后补：不需要，导入发票清单即可。';
+        const discountLine = hasDiscount ? '\n- 客户 1 周内已贴现，请提醒补齐贴现流水。' : '';
+
+        const internalMail = buildInternalMail(corp, billWanText, depositWanForMail, rateText, daysText);
+        const invoiceSupplementBlock = needInvoice === '是'
+          ? `\n\n${buildInvoiceSupplement(corp, invoiceTarget, billWanText)}`
+          : '';
+        const contractLine = `- 系统担保合同期限：${calcState.startDate || '—'} 至 ${calcState.endDate || '—'}；开票金额 ${billYuanText}（${billUpper || '中文金额待补充'}）；存单金额 ${depositAmountFormatted}（${depositAmountUpper || '中文金额待补充'}）；担保金额 ${pledgeAmountFormatted}（${pledgeAmountUpper || '中文金额待补充'}）。`;
+
+        internal = `【内部测算】
+客户：${corp}
+业务模式：${calcState.source === 'bill' ? '按开票金额测算存单' : '按存单反推可开票'}
+目标开票：${billWanText} 万元（${billYuanText}）
+利率：${rateText}｜期限：${daysText} 天｜开票：${calcState.startDate || '—'}｜到期：${calcState.endDate || '—'}
+${measureBlock}
+
+【资料 & 票据信息】
+${invoiceLine}
+${invoiceNeedLine}
+
+【柜台oa/ 邮件模板】
+${internalMail}
+${contractLine}
+${invoiceSupplementBlock}
+
+【客户经理提醒】
+- 请再次确认发票是否需候补，以及开票张数、金额。；
+- 让客户确认进款计划并邮件附上进款截图；
+- 核实单笔利率审批 OA 与冻结存单用印 OA 均已发起；
+- 检查进一周是否有贴现。${hasDiscount ? '\n- 1 周内已贴现的客户需同步贴现流水。' : ''}${needInvoice === '是' ? '\n- 提醒客户按承诺时间补齐增值税发票。' : ''}`;
+
+        const clientMaterialsLine = `购销合同、发票、发票清单、进款截图${hasDiscount ? '，如 1 周内已贴现请同步贴现流水' : ''}`;
+        client = `【票据信息】
+- 拟开票金额：${billWanText} 万元；
+- 定期存单：${depositWanForClient}，利率 ${rateText}，期限约 ${daysText} 天。
+【请在群里发送】
+- ${clientMaterialsLine}。
+【请在群里确认】
+1）是否缺发票？缺多少？是否涉及2-6个月发票？（不接受超6个月）；
+2）进款及提票时间；
+3）开票张数 ${invoiceCount} 张、收款方 ${invoiceTarget} 。`;
+      }
+
+      document.getElementById('internalOutput').value = internal;
+      document.getElementById('clientOutput').value = client;
+    }
+
+    function runSmartCalc(silent = false) {
+      const billInputWan = parseFloat(document.getElementById('billAmt').value);
+      const depositInputWan = parseFloat(document.getElementById('depositBudget').value);
+      const billInput = !Number.isNaN(billInputWan) ? billInputWan * 10000 : NaN;
+      const depositInput = !Number.isNaN(depositInputWan) ? depositInputWan * 10000 : NaN;
+      const rateInput = parseFloat(document.getElementById('rate').value);
+      const daysInput = parseInt(document.getElementById('days').value, 10);
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+
+      const hasBill = Number.isFinite(billInput) && billInput > 0;
+      const hasDeposit = Number.isFinite(depositInput) && depositInput > 0;
+
+      if (!hasBill && !hasDeposit) {
+        if (!silent) {
+          alert('请至少填写拟开票金额或拟存定期中的一项（单位：万元）');
+        }
+        return false;
+      }
+      if (!rateInput || !daysInput) {
+        if (!silent) {
+          alert('请填写利率和期限');
+        }
+        return false;
+      }
+
+      calcState.source = hasBill ? 'bill' : 'deposit';
+      calcState.rate = rateInput;
+      calcState.days = daysInput;
+      calcState.startDate = startDate;
+      calcState.endDate = endDate;
+
+      if (hasBill) {
+        const base365 = billInput / (1 + rateInput * (daysInput / 365));
+        const base360 = billInput / (1 + rateInput * (daysInput / 360));
+        const roundedWan = Math.ceil(base365 / 10000);
+        calcState.depositBudget = null;
+        calcState.depositRequirement365 = base365;
+        calcState.depositRequirement360 = base360;
+        calcState.maxBill365 = billInput;
+        calcState.maxBill360 = billInput;
+        calcState.roundedDepositWan = roundedWan;
+        calcState.roundedDepositYuan = roundedWan * 10000;
+      } else {
+        const bill365 = depositInput * (1 + rateInput * (daysInput / 365));
+        const bill360 = depositInput * (1 + rateInput * (daysInput / 360));
+        const roundedWan = Math.ceil(depositInput / 10000);
+        calcState.depositBudget = depositInput;
+        calcState.depositRequirement365 = null;
+        calcState.depositRequirement360 = null;
+        calcState.maxBill365 = bill365;
+        calcState.maxBill360 = bill360;
+        calcState.roundedDepositWan = roundedWan;
+        calcState.roundedDepositYuan = roundedWan * 10000;
+      }
+
+      updateOutputs();
+      return true;
+    }
+
+    function rerunIfPossible() {
+      if (!calcState.source) return;
+      const billFilled = document.getElementById('billAmt').value.trim();
+      const depositFilled = document.getElementById('depositBudget').value.trim();
+      if (!billFilled && !depositFilled) return;
+      runSmartCalc(true);
+    }
+
+    function resetMaterialsToDefault() {
+      document.querySelectorAll('.material-checkbox').forEach((el) => {
+        el.checked = el.dataset.default === 'true';
+      });
+    }
+
+    function syncDiscountMaterials() {
+      const discount = document.getElementById('discountStatus').value === '是';
+      document.querySelectorAll('.material-checkbox[data-discount="true"]').forEach((el) => {
+        el.checked = discount;
+      });
+      updateOutputs();
+    }
+
+    function resetAll() {
+      if (!confirm('确定清空所有内容？')) return;
+      document.querySelectorAll('input, select, textarea').forEach((el) => {
+        if (el.type === 'date') {
+          el.value = '';
+        } else if (el.type === 'checkbox') {
+          el.checked = false;
+        } else if (el.tagName === 'SELECT') {
+          el.selectedIndex = 0;
+        } else {
+          el.value = '';
+        }
+      });
+      document.getElementById('discountStatus').value = '否';
+      resetMaterialsToDefault();
+      calcState.source = '';
+      calcState.depositBudget = null;
+      calcState.depositRequirement360 = null;
+      calcState.depositRequirement365 = null;
+      calcState.maxBill360 = null;
+      calcState.maxBill365 = null;
+      calcState.roundedDepositWan = null;
+      calcState.roundedDepositYuan = null;
+      calcState.rate = null;
+      calcState.days = null;
+      calcState.startDate = '';
+      calcState.endDate = '';
+      const today = todayISO();
+      document.getElementById('startDate').value = today;
+      document.getElementById('endDate').value = addMonths(today, 6);
+      updateDays();
+      updateOutputs();
+    }
+
+    document.getElementById('btnSmartCalc').addEventListener('click', () => runSmartCalc());
+    document.getElementById('btnReset').addEventListener('click', resetAll);
+    document.getElementById('startDate').addEventListener('change', () => {
+      updateDays();
+      calcState.startDate = document.getElementById('startDate').value;
+      calcState.endDate = document.getElementById('endDate').value;
+      rerunIfPossible();
+    });
+    document.getElementById('rate').addEventListener('change', rerunIfPossible);
+    document.getElementById('rate').addEventListener('input', () => {
+      if (calcState.source) {
+        // 仅在已测算时尝试重新计算，避免输入过程频繁弹窗
+        rerunIfPossible();
+      }
+    });
+
+    ['corp', 'invoiceCount', 'invoiceTarget'].forEach((id) => {
+      document.getElementById(id).addEventListener('input', updateOutputs);
+    });
+    document.getElementById('needInvoice').addEventListener('change', updateOutputs);
+    document.getElementById('discountStatus').addEventListener('change', syncDiscountMaterials);
+    document.querySelectorAll('.material-checkbox').forEach((el) => {
+      el.addEventListener('change', updateOutputs);
+    });
+    document.querySelectorAll('[data-copy-target]').forEach((btn) => {
+      btn.addEventListener('click', () => copyOutput(btn.dataset.copyTarget));
+    });
+
+    window.addEventListener('load', () => {
+      const today = todayISO();
+      document.getElementById('startDate').value = today;
+      updateDays();
+      resetMaterialsToDefault();
+      syncDiscountMaterials();
+      updateOutputs();
+    });
+  </script>
+</body>
+</html>
